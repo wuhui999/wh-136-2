@@ -145,6 +145,16 @@ class ArtifactResponse(ArtifactBase):
         from_attributes = True
 
 
+class ArtifactListResponse(BaseModel):
+    items: List[ArtifactResponse]
+    total: int
+    page: int
+    page_size: int
+
+    class Config:
+        from_attributes = True
+
+
 class AuditBase(BaseModel):
     audit_type: AuditType
     description: Optional[str] = None

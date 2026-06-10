@@ -6,7 +6,7 @@ from datetime import datetime
 from database import get_db
 from auth import get_current_user, require_roles
 from models import Artifact, Stratum, User, UserRole, ArtifactStatus, Audit, AuditType, AuditStatus
-from schemas import ArtifactCreate, ArtifactUpdate, ArtifactResponse, StratumResponse
+from schemas import ArtifactCreate, ArtifactUpdate, ArtifactResponse, StratumResponse, ArtifactListResponse
 
 router = APIRouter(prefix="/api/artifacts", tags=["出土物"])
 
@@ -33,10 +33,13 @@ def check_status_transition(old_status: ArtifactStatus, new_status: ArtifactStat
     return True
 
 
-@router.get("", response_model=List[ArtifactResponse])
+@router.get("", response_model=ArtifactListResponse)
 async def list_artifacts(
     stratum_id: int = None,
     status: ArtifactStatus = None,
+    keyword: str = None,
+    page: int = 1,
+    page_size: int = 20,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -45,8 +48,21 @@ async def list_artifacts(
         query = query.filter(Artifact.stratum_id == stratum_id)
     if status:
         query = query.filter(Artifact.status == status)
-    artifacts = query.order_by(Artifact.created_at.desc()).all()
-    return artifacts
+    if keyword:
+        keyword_pattern = f"%{keyword}%"
+        query = query.filter(
+            (Artifact.code.ilike(keyword_pattern)) |
+            (Artifact.category.ilike(keyword_pattern))
+        )
+    total = query.count()
+    offset = (page - 1) * page_size
+    artifacts = query.order_by(Artifact.created_at.desc()).offset(offset).limit(page_size).all()
+    return ArtifactListResponse(
+        items=artifacts,
+        total=total,
+        page=page,
+        page_size=page_size
+    )
 
 
 @router.get("/{artifact_id}", response_model=ArtifactResponse)

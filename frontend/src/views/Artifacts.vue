@@ -5,10 +5,22 @@
         <div class="page-header">
           <span class="page-title">出土物管理</span>
           <div class="header-actions">
-            <el-select v-model="filterStratum" placeholder="按地层筛选" clearable style="width: 180px; margin-right: 12px;" @change="loadData">
+            <el-input
+              v-model="searchKeyword"
+              placeholder="搜索编号或类别"
+              clearable
+              style="width: 220px; margin-right: 12px;"
+              @keyup.enter="handleSearch"
+              @clear="handleSearch"
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+            <el-select v-model="filterStratum" placeholder="按地层筛选" clearable style="width: 180px; margin-right: 12px;" @change="handleFilterChange">
               <el-option v-for="s in strata" :key="s.id" :label="s.code" :value="s.id" />
             </el-select>
-            <el-select v-model="filterStatus" placeholder="按状态筛选" clearable style="width: 140px; margin-right: 12px;" @change="loadData">
+            <el-select v-model="filterStatus" placeholder="按状态筛选" clearable style="width: 140px; margin-right: 12px;" @change="handleFilterChange">
               <el-option label="出土" value="出土" />
               <el-option label="清洗" value="清洗" />
               <el-option label="修复" value="修复" />
@@ -53,6 +65,18 @@
           </template>
         </el-table-column>
       </el-table>
+      <div class="pagination-wrapper">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handleSizeChange"
+          @current-change="handlePageChange"
+        />
+      </div>
     </el-card>
 
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑出土物' : '新增出土物'" width="600px">
@@ -132,7 +156,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Search } from '@element-plus/icons-vue'
 import api from '../utils/api'
 import { useAuthStore } from '../stores/auth'
 
@@ -149,6 +173,10 @@ const isEdit = ref(false)
 const editId = ref(null)
 const filterStratum = ref(route.query.stratum_id ? Number(route.query.stratum_id) : '')
 const filterStatus = ref('')
+const searchKeyword = ref('')
+const currentPage = ref(1)
+const pageSize = ref(20)
+const total = ref(0)
 const formRef = ref(null)
 const currentArtifact = ref(null)
 const newStatus = ref('')
@@ -198,13 +226,40 @@ const getStratumCode = (id) => {
 const loadData = async () => {
   loading.value = true
   try {
-    const params = {}
+    const params = {
+      page: currentPage.value,
+      page_size: pageSize.value
+    }
     if (filterStratum.value) params.stratum_id = filterStratum.value
     if (filterStatus.value) params.status = filterStatus.value
-    list.value = await api.get('/artifacts', { params })
+    if (searchKeyword.value) params.keyword = searchKeyword.value
+    const result = await api.get('/artifacts', { params })
+    list.value = result.items
+    total.value = result.total
   } finally {
     loading.value = false
   }
+}
+
+const handleSearch = () => {
+  currentPage.value = 1
+  loadData()
+}
+
+const handleFilterChange = () => {
+  currentPage.value = 1
+  loadData()
+}
+
+const handlePageChange = (val) => {
+  currentPage.value = val
+  loadData()
+}
+
+const handleSizeChange = (val) => {
+  pageSize.value = val
+  currentPage.value = 1
+  loadData()
 }
 
 const loadStrata = async () => {
@@ -300,5 +355,10 @@ onMounted(async () => {
   font-family: 'Consolas', monospace;
   font-size: 13px;
   color: #606266;
+}
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 </style>
