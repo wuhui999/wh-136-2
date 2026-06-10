@@ -38,6 +38,14 @@ async def read_current_user(current_user: User = Depends(get_current_user)):
     return current_user
 
 
+@router.get("/users/simple", response_model=list[UserResponse])
+async def list_users_simple(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    return db.query(User).all()
+
+
 @router.get("/users", response_model=list[UserResponse])
 async def list_users(
     db: Session = Depends(get_db),

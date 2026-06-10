@@ -47,7 +47,7 @@
         <el-table-column prop="updated_at" label="更新时间" width="180" />
         <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="openDialog(row)">编辑</el-button>
+            <el-button type="primary" link size="small" @click="openDialog(row)" :disabled="!auth.isExcavator && !auth.isCurator && !auth.isAdmin">编辑</el-button>
             <el-button type="warning" link size="small" @click="changeStatus(row)" :disabled="!auth.isCurator && !auth.isAdmin">更新状态</el-button>
             <el-button type="danger" link size="small" @click="handleDelete(row)" :disabled="!auth.isAdmin">删除</el-button>
           </template>
@@ -73,17 +73,17 @@
         <el-row :gutter="12">
           <el-col :span="8">
             <el-form-item label="X坐标">
-              <el-input-number v-model="form.coord_x" :precision="3" :step="0.1" style="width: 100%;" />
+              <el-input-number v-model="form.coord_x" :precision="3" :step="0.1" :min="-9999" :max="9999" style="width: 100%;" controls-position="right" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="Y坐标">
-              <el-input-number v-model="form.coord_y" :precision="3" :step="0.1" style="width: 100%;" />
+              <el-input-number v-model="form.coord_y" :precision="3" :step="0.1" :min="-9999" :max="9999" style="width: 100%;" controls-position="right" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="Z坐标">
-              <el-input-number v-model="form.coord_z" :precision="3" :step="0.1" style="width: 100%;" />
+              <el-input-number v-model="form.coord_z" :precision="3" :step="0.1" :min="-9999" :max="9999" style="width: 100%;" controls-position="right" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -165,9 +165,9 @@ const form = reactive({
   code: '',
   category: '',
   stratum_id: null,
-  coord_x: null,
-  coord_y: null,
-  coord_z: null,
+  coord_x: 0,
+  coord_y: 0,
+  coord_z: 0,
   status: '出土',
   description: ''
 })
@@ -222,9 +222,9 @@ const openDialog = (row = null) => {
     code: row?.code || '',
     category: row?.category || '',
     stratum_id: row?.stratum_id || filterStratum.value || null,
-    coord_x: row?.coord_x ?? null,
-    coord_y: row?.coord_y ?? null,
-    coord_z: row?.coord_z ?? null,
+    coord_x: row?.coord_x ?? 0,
+    coord_y: row?.coord_y ?? 0,
+    coord_z: row?.coord_z ?? 0,
     status: row?.status || '出土',
     description: row?.description || ''
   })

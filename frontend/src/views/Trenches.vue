@@ -11,7 +11,7 @@
               <el-option label="完成" value="完成" />
               <el-option label="归档" value="归档" />
             </el-select>
-            <el-button type="primary" :icon="Plus" @click="openDialog()">新增探方</el-button>
+            <el-button type="primary" :icon="Plus" @click="openDialog()" :disabled="!auth.isExcavator && !auth.isAdmin">新增探方</el-button>
           </div>
         </div>
       </template>
@@ -32,9 +32,9 @@
         <el-table-column prop="created_at" label="创建时间" width="180" />
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="openDialog(row)">编辑</el-button>
+            <el-button type="primary" link size="small" @click="openDialog(row)" :disabled="!auth.isExcavator && !auth.isAdmin">编辑</el-button>
             <el-button type="success" link size="small" @click="goToStrata(row)">地层</el-button>
-            <el-button type="danger" link size="small" @click="handleDelete(row)" v-if="auth.isAdmin">删除</el-button>
+            <el-button type="danger" link size="small" @click="handleDelete(row)" :disabled="!auth.isAdmin">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -121,7 +121,7 @@ const loadData = async () => {
 
 const loadUsers = async () => {
   try {
-    users.value = await api.get('/auth/users')
+    users.value = await api.get('/auth/users/simple')
   } catch {}
 }
 
